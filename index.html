@@ -46,11 +46,13 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io('https://railway.app/project/738cfbec-dac5-43e4-91a3-316a71ad6767/service/b0618fec-8576-411a-af08-8edcdf65c7ef/settings#networking');
+        const socket = io(); // Connexion automatique à Socket.io via le serveur actuel
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = 800;
-        canvas.height = 600;
+
+        // Mettre à jour la taille du canvas en fonction de la taille de la fenêtre
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
         let players = [];
         let playerColor = '';
@@ -58,30 +60,40 @@
         let playerX = 100;
         let playerY = 100;
 
+        // Écouteur d'événements pour la mise à jour des positions des joueurs
         socket.on('updatePlayers', (data) => {
             players = data;
             drawMap();
         });
 
+        // Gestion du tir
         socket.on('shoot', (data) => {
-            // Gérer le tir ici, par exemple afficher un laser
+            // Afficher le tir des autres joueurs (à améliorer)
             if (data.id !== playerId) {
                 // Afficher le tir des autres joueurs
             }
         });
 
         function drawMap() {
+            // Effacer le canvas avant de redessiner
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dessiner tous les joueurs
             players.forEach(player => {
                 ctx.fillStyle = player.color;
                 ctx.fillRect(player.x, player.y, 50, 50);
             });
+
+            // Dessiner le joueur actuel (ton personnage)
+            ctx.fillStyle = playerColor;
+            ctx.fillRect(playerX, playerY, 50, 50);
         }
 
         function updatePlayerPosition() {
             socket.emit('move', { x: playerX, y: playerY });
         }
 
+        // Écouter les touches de direction
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp') playerY -= 5;
             else if (e.key === 'ArrowDown') playerY += 5;
@@ -92,20 +104,31 @@
         });
 
         document.getElementById('resetButton').addEventListener('click', () => {
-            socket.emit('resetGame');
+            // Réinitialiser la position du joueur et redessiner la carte
             playerX = 100;
             playerY = 100;
+            socket.emit('resetGame');
             drawMap();
         });
 
+        // Fonction pour simuler un tir
         function shoot() {
-            // Implémenter le tir
-            socket.emit('shoot', { angle: 0 });
+            // Ici, tu peux définir un tir plus complexe (angle, vitesse, etc.)
+            socket.emit('shoot', { angle: 0, id: playerId });
         }
 
+        // Intervalle pour redessiner la carte
         setInterval(() => {
             drawMap();
         }, 100);
+
+        // Demander au serveur de donner une couleur et un ID unique au joueur
+        socket.emit('joinGame');
+        socket.on('playerInfo', (data) => {
+            playerColor = data.color;
+            playerId = data.id;
+        });
+
     </script>
 </body>
 </html>
