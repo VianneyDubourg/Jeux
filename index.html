@@ -4,15 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu Multijoueur</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .game-container {
+            position: relative;
+        }
+        canvas {
+            border: 2px solid black;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #007B9E;
+        }
+    </style>
 </head>
 <body>
     <div class="game-container">
         <canvas id="gameCanvas"></canvas>
-        <button id="startButton">Démarrer / Réinitialiser la Partie</button>
+        <button id="resetButton">Réinitialiser la Partie</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="game.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 600;
+
+        let players = [];
+        let playerColor = '';
+        let playerId = '';
+        let playerX = 100;
+        let playerY = 100;
+
+        socket.on('updatePlayers', (data) => {
+            players = data;
+            drawMap();
+        });
+
+        socket.on('shoot', (data) => {
+            // Gérer le tir ici, par exemple afficher un laser
+            if (data.id !== playerId) {
+                // Afficher le tir des autres joueurs
+            }
+        });
+
+        function drawMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            players.forEach(player => {
+                ctx.fillStyle = player.color;
+                ctx.fillRect(player.x, player.y, 50, 50);
+            });
+        }
+
+        function updatePlayerPosition() {
+            socket.emit('move', { x: playerX, y: playerY });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') playerY -= 5;
+            else if (e.key === 'ArrowDown') playerY += 5;
+            else if (e.key === 'ArrowLeft') playerX -= 5;
+            else if (e.key === 'ArrowRight') playerX += 5;
+
+            updatePlayerPosition();
+        });
+
+        document.getElementById('resetButton').addEventListener('click', () => {
+            socket.emit('resetGame');
+            playerX = 100;
+            playerY = 100;
+            drawMap();
+        });
+
+        function shoot() {
+            // Implémenter le tir
+            socket.emit('shoot', { angle: 0 });
+        }
+
+        setInterval(() => {
+            drawMap();
+        }, 100);
+    </script>
 </body>
 </html>
