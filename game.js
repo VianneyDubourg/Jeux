@@ -13,11 +13,19 @@ const player = {
     lastDirection: "right", // Dernière direction dans laquelle le joueur a déplacé
 };
 
-// Liste des murs
+// Liste des murs (ajout de nouveaux murs et pièces fermées)
 const walls = [
     { x: 200, y: 150, width: 100, height: 20 },
     { x: 400, y: 300, width: 150, height: 20 },
     { x: 300, y: 400, width: 20, height: 100 },
+    { x: 150, y: 100, width: 100, height: 20 }, // Mur supplémentaire
+    { x: 500, y: 100, width: 20, height: 150 }, // Mur supplémentaire
+    { x: 650, y: 200, width: 20, height: 200 }, // Mur supplémentaire
+    { x: 50, y: 450, width: 200, height: 20 }, // Mur supplémentaire
+    { x: 600, y: 450, width: 200, height: 20 }, // Mur supplémentaire
+    { x: 100, y: 250, width: 100, height: 100 }, // Pièce fermée
+    { x: 400, y: 100, width: 100, height: 100 }, // Pièce fermée
+    { x: 600, y: 300, width: 100, height: 100 }, // Pièce fermée
 ];
 
 // Liste des projectiles
