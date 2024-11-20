@@ -10,27 +10,13 @@ const player = {
     size: 20,
     color: "red",
     speed: 5,
-    lastDirection: "right", // Dernière direction dans laquelle le joueur a déplacé
+    lastDirection: "right",
 };
 
-// Liste des murs (ajout de nouveaux murs et pièces fermées)
-const walls = [
-    { x: 200, y: 150, width: 100, height: 20 },
-    { x: 400, y: 300, width: 150, height: 20 },
-    { x: 300, y: 400, width: 20, height: 100 },
-    { x: 150, y: 100, width: 100, height: 20 }, // Mur supplémentaire
-    { x: 500, y: 100, width: 20, height: 150 }, // Mur supplémentaire
-    { x: 650, y: 200, width: 20, height: 200 }, // Mur supplémentaire
-    { x: 50, y: 450, width: 200, height: 20 }, // Mur supplémentaire
-    { x: 600, y: 450, width: 200, height: 20 }, // Mur supplémentaire
-    { x: 100, y: 250, width: 100, height: 100 }, // Pièce fermée
-    { x: 400, y: 100, width: 100, height: 100 }, // Pièce fermée
-    { x: 600, y: 300, width: 100, height: 100 }, // Pièce fermée
-];
+let otherPlayers = []; // Liste des autres joueurs
+const bullets = []; // Liste des projectiles
 
-// Liste des projectiles
-const bullets = [];
-const bulletSpeed = 7;
+const socket = io(); // Connexion au serveur
 
 // Dessiner le joueur
 function drawPlayer() {
@@ -38,37 +24,54 @@ function drawPlayer() {
     ctx.fillRect(player.x, player.y, player.size, player.size);
 }
 
-// Dessiner les murs
-function drawWalls() {
-    ctx.fillStyle = "grey";
-    walls.forEach((wall) => {
-        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+// Dessiner les autres joueurs
+function drawOtherPlayers() {
+    otherPlayers.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
     });
 }
 
-// Dessiner les bordures de la map
-function drawMapBorders() {
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+// Dessiner les projectiles
+function drawBullets() {
+    bullets.forEach(bullet => {
+        ctx.fillStyle = bullet.color;
+        ctx.fillRect(bullet.x, bullet.y, bullet.size, bullet.size);
+    });
 }
 
-// Vérifier les collisions avec les murs
-function checkWallCollision(player) {
-    for (let wall of walls) {
-        if (
-            player.x < wall.x + wall.width &&
-            player.x + player.size > wall.x &&
-            player.y < wall.y + wall.height &&
-            player.y + player.size > wall.y
-        ) {
-            return true;
+// Mettre à jour les positions des autres joueurs
+socket.on('updatePlayers', (players) => {
+    otherPlayers = Object.keys(players).map(id => {
+        if (id !== socket.id) {
+            return players[id];
         }
-    }
-    return false;
+    }).filter(Boolean);
+});
+
+// Mettre à jour les projectiles
+socket.on('shootBullet', (bullet) => {
+    bullets.push(bullet);
+});
+
+// Envoyer les mouvements du joueur au serveur
+function sendPlayerMovement() {
+    socket.emit('movePlayer', {
+        x: player.x,
+        y: player.y,
+        color: player.color,
+        lastDirection: player.lastDirection
+    });
 }
 
-// Détecter les touches pour déplacer le joueur
+// Envoyer les projectiles au serveur
+function sendBulletMovement() {
+    bullets.forEach(bullet => {
+        socket.emit('shootBullet', bullet);
+    });
+}
+
+// Contrôles pour déplacer le joueur et tirer
 document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowUp") {
         player.y = Math.max(0, player.y - player.speed);
@@ -91,17 +94,7 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-// Annuler le déplacement en cas de collision
-function handleWallCollision() {
-    if (checkWallCollision(player)) {
-        if (player.lastDirection === "up") player.y += player.speed;
-        if (player.lastDirection === "down") player.y -= player.speed;
-        if (player.lastDirection === "left") player.x += player.speed;
-        if (player.lastDirection === "right") player.x -= player.speed;
-    }
-}
-
-// Tirer un projectile
+// Fonction pour tirer un projectile
 function shootBullet() {
     let bullet = {
         x: player.x + player.size / 2 - 5,
@@ -111,63 +104,18 @@ function shootBullet() {
         direction: player.lastDirection,
     };
     bullets.push(bullet);
+    sendBulletMovement(); // Envoie le projectile au serveur
 }
 
-// Dessiner les projectiles
-function drawBullets() {
-    bullets.forEach((bullet) => {
-        ctx.fillStyle = bullet.color;
-        ctx.fillRect(bullet.x, bullet.y, bullet.size, bullet.size);
-    });
-}
-
-// Mettre à jour les projectiles
-function updateBullets() {
-    bullets.forEach((bullet, index) => {
-        if (bullet.direction === "up") bullet.y -= bulletSpeed;
-        if (bullet.direction === "down") bullet.y += bulletSpeed;
-        if (bullet.direction === "left") bullet.x -= bulletSpeed;
-        if (bullet.direction === "right") bullet.x += bulletSpeed;
-
-        // Supprimer les projectiles hors écran ou touchant un mur
-        if (
-            bullet.x < 0 ||
-            bullet.y < 0 ||
-            bullet.x > canvas.width ||
-            bullet.y > canvas.height ||
-            checkBulletCollision(bullet)
-        ) {
-            bullets.splice(index, 1); // Supprime le projectile
-        }
-    });
-}
-
-// Vérifier les collisions des projectiles avec les murs
-function checkBulletCollision(bullet) {
-    for (let wall of walls) {
-        if (
-            bullet.x < wall.x + wall.width &&
-            bullet.x + bullet.size > wall.x &&
-            bullet.y < wall.y + wall.height &&
-            bullet.y + bullet.size > wall.y
-        ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Boucle principale
+// Fonction pour dessiner la scène
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    drawMapBorders();
-    drawWalls();
     drawPlayer();
     drawBullets();
+    drawOtherPlayers();
 
-    handleWallCollision();
-    updateBullets();
+    sendPlayerMovement();
 }
 
-setInterval(update, 16);
+setInterval(update, 16); // Rafraîchit la scène toutes les 16ms (60FPS)
