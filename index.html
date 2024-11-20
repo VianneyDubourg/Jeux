@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu Multijoueur</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { background-color: #f0f0f0; display: block; margin: auto; }
+    </style>
 </head>
 <body>
-    <h1>Jeu Multijoueur</h1>
     <canvas id="gameCanvas"></canvas>
-    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+
     <script src="game.js"></script>
 </body>
 </html>
