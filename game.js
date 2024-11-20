@@ -16,7 +16,7 @@ const player = {
 let otherPlayers = []; // Liste des autres joueurs
 const bullets = []; // Liste des projectiles
 
-const socket = io(); // Connexion au serveur
+const socket = io('https://railway.app/project/a74dc6e0-73f7-4840-882e-98de92e9b9bf'); // Connexion au serveur
 
 // Dessiner le joueur
 function drawPlayer() {
