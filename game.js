@@ -13,7 +13,7 @@ const player = {
 };
 
 // Connexion au serveur Socket.IO
-const socket = io("https://ton-backend-railway-url"); // Mets l'URL Railway ici
+const socket = io("https://railway.app/project/a74dc6e0-73f7-4840-882e-98de92e9b9bf"); // Mets l'URL Railway ici
 
 function drawPlayer() {
     ctx.fillStyle = player.color;
