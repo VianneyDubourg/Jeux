@@ -4,89 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jeu Multijoueur</title>
-    <style>
-        body { margin: 0; padding: 0; }
-        canvas { display: block; background: #f0f0f0; }
-        #startButton { position: absolute; top: 10px; left: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <button id="startButton">Démarrer la Partie</button>
-    <canvas id="gameCanvas"></canvas>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <button id="startButton">Démarrer / Réinitialiser la Partie</button>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.1/dist/socket.io.min.js"></script>
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const startButton = document.getElementById('startButton');
-        const socket = io();
-
-        let playerColor = null;
-        let players = [];
-        let playerX = 100;
-        let playerY = 100;
-        let playerSpeed = 3;
-
-        // Ajuster la taille du canvas
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        // Recevoir la couleur du joueur
-        socket.on('color', (color) => {
-            playerColor = color;
-        });
-
-        // Recevoir la liste des joueurs
-        socket.on('players', (updatedPlayers) => {
-            players = updatedPlayers;
-            drawPlayers();
-        });
-
-        // Dessiner les joueurs et leur zone protégée
-        function drawPlayers() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            players.forEach(player => {
-                // Dessiner la zone protégée (en vert translucide)
-                ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
-                ctx.fillRect(player.protectedZone.x, player.protectedZone.y, player.protectedZone.width, player.protectedZone.height);
-
-                // Dessiner le joueur
-                ctx.fillStyle = player.color;
-                ctx.fillRect(player.x, player.y, 50, 50);
-            });
-        }
-
-        // Détection des touches
-        const keys = {};
-        window.addEventListener('keydown', (e) => keys[e.key] = true);
-        window.addEventListener('keyup', (e) => keys[e.key] = false);
-
-        // Fonction pour déplacer le joueur
-        function movePlayer() {
-            if (playerColor) {
-                if (keys['ArrowUp']) playerY -= playerSpeed;
-                if (keys['ArrowDown']) playerY += playerSpeed;
-                if (keys['ArrowLeft']) playerX -= playerSpeed;
-                if (keys['ArrowRight']) playerX += playerSpeed;
-
-                socket.emit('move', { x: playerX, y: playerY });
-            }
-        }
-
-        // Démarrer ou réinitialiser la partie
-        startButton.addEventListener('click', () => {
-            socket.emit('reset');
-        });
-
-        // Boucle du jeu
-        function gameLoop() {
-            movePlayer();
-            drawPlayers();
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();  // Lancer le jeu
-    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
