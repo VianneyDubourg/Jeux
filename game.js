@@ -10,11 +10,8 @@ const player = {
     size: 20,
     color: "red",
     speed: 5,
-    lastDirection: "right", // Pour savoir dans quelle direction tirer
+    lastDirection: "right", // Dernière direction dans laquelle le joueur a déplacé
 };
-
-// Connexion au serveur (si nécessaire)
-const socket = io("https://ton-backend-railway-url"); // Mets l'URL Railway ici
 
 // Liste des murs
 const walls = [
