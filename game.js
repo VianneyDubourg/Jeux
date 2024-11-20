@@ -10,10 +10,10 @@ const player = {
     size: 20,
     color: "red",
     speed: 5,
-    lastKey: null,
+    lastDirection: "right", // Pour savoir dans quelle direction tirer
 };
 
-// Connexion au serveur (si nécessaire, sinon laisse vide)
+// Connexion au serveur (si nécessaire)
 const socket = io("https://ton-backend-railway-url"); // Mets l'URL Railway ici
 
 // Liste des murs
@@ -41,6 +41,13 @@ function drawWalls() {
     });
 }
 
+// Dessiner les bordures de la map
+function drawMapBorders() {
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+}
+
 // Vérifier les collisions avec les murs
 function checkWallCollision(player) {
     for (let wall of walls) {
@@ -58,11 +65,22 @@ function checkWallCollision(player) {
 
 // Détecter les touches pour déplacer le joueur
 document.addEventListener("keydown", (e) => {
-    player.lastKey = e.key;
-    if (e.key === "ArrowUp" && player.y > 0) player.y -= player.speed;
-    if (e.key === "ArrowDown" && player.y + player.size < canvas.height) player.y += player.speed;
-    if (e.key === "ArrowLeft" && player.x > 0) player.x -= player.speed;
-    if (e.key === "ArrowRight" && player.x + player.size < canvas.width) player.x += player.speed;
+    if (e.key === "ArrowUp") {
+        player.y = Math.max(0, player.y - player.speed);
+        player.lastDirection = "up";
+    }
+    if (e.key === "ArrowDown") {
+        player.y = Math.min(canvas.height - player.size, player.y + player.speed);
+        player.lastDirection = "down";
+    }
+    if (e.key === "ArrowLeft") {
+        player.x = Math.max(0, player.x - player.speed);
+        player.lastDirection = "left";
+    }
+    if (e.key === "ArrowRight") {
+        player.x = Math.min(canvas.width - player.size, player.x + player.speed);
+        player.lastDirection = "right";
+    }
     if (e.key === " ") {
         shootBullet();
     }
@@ -71,21 +89,23 @@ document.addEventListener("keydown", (e) => {
 // Annuler le déplacement en cas de collision
 function handleWallCollision() {
     if (checkWallCollision(player)) {
-        if (player.lastKey === "ArrowUp") player.y += player.speed;
-        if (player.lastKey === "ArrowDown") player.y -= player.speed;
-        if (player.lastKey === "ArrowLeft") player.x += player.speed;
-        if (player.lastKey === "ArrowRight") player.x -= player.speed;
+        if (player.lastDirection === "up") player.y += player.speed;
+        if (player.lastDirection === "down") player.y -= player.speed;
+        if (player.lastDirection === "left") player.x += player.speed;
+        if (player.lastDirection === "right") player.x -= player.speed;
     }
 }
 
 // Tirer un projectile
 function shootBullet() {
-    bullets.push({
+    let bullet = {
         x: player.x + player.size / 2 - 5,
         y: player.y + player.size / 2 - 5,
         size: 10,
         color: "yellow",
-    });
+        direction: player.lastDirection,
+    };
+    bullets.push(bullet);
 }
 
 // Dessiner les projectiles
@@ -99,7 +119,10 @@ function drawBullets() {
 // Mettre à jour les projectiles
 function updateBullets() {
     bullets.forEach((bullet, index) => {
-        bullet.y -= bulletSpeed;
+        if (bullet.direction === "up") bullet.y -= bulletSpeed;
+        if (bullet.direction === "down") bullet.y += bulletSpeed;
+        if (bullet.direction === "left") bullet.x -= bulletSpeed;
+        if (bullet.direction === "right") bullet.x += bulletSpeed;
 
         // Supprimer les projectiles hors écran ou touchant un mur
         if (
@@ -133,6 +156,7 @@ function checkBulletCollision(bullet) {
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    drawMapBorders();
     drawWalls();
     drawPlayer();
     drawBullets();
@@ -142,4 +166,3 @@ function update() {
 }
 
 setInterval(update, 16);
-
